@@ -17,28 +17,42 @@ def get_embeddings(data: pd.DataFrame):
     data = data.dropna(axis=0)
     data.columns = ['store_description', 'store_labels']
 
-    tot_labels = []
-    vocab = []
-    length = []
+
     row_list = []
     for index, row in data.iterrows():
         if row['store_labels'] == '[]': row_list.append(index)
+        text = row['store_description']
+        text = str_to_list(text)
+        if len(text) <= 10:
+            row_list.append(index)
+        if len(text) > 100:
+            row_list.append(index)
+
+    data = data.drop(row_list)
+    data['Id'] = data['store_description'].factorize()[0]
+    data = data.reset_index(drop=True)
+
+
+    tot_labels = []
+    vocab = []
+    length = []
+    id_length = {}
+    for index, row in data.iterrows():
         label = row['store_labels']
         text = row['store_description']
         label = str_to_list(label)
         text = str_to_list(text)
+        id_length[index] = len(text)
         length.append(len(text))
-        if len(text) <= 10:
-            row_list.append(index)
-            length.pop()
         for word in label:
             if word not in tot_labels:
                 tot_labels.append(word)
         vocab.append(text)
 
-    data = data.drop(row_list)
-    data['Id'] = data['store_description'].factorize()[0]
-    data = data.reset_index(drop=True)
+    #data = data.drop(row_list)
+    #data['Id'] = data['store_description'].factorize()[0]
+    #data = data.reset_index(drop=True)
+
 
 
 
@@ -84,7 +98,7 @@ def get_embeddings(data: pd.DataFrame):
         Id_to_label[index] = label.float()
 
 
-    return data, labels_to_onehot, Id_to_text, Id_to_label, tot_labels, length
+    return data, labels_to_onehot, Id_to_text, Id_to_label, tot_labels, length, id_length
 
 
 

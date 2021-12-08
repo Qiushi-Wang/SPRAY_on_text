@@ -11,6 +11,7 @@ import torch.optim as optim
 import torch.nn as nn
 from word_embeddings import get_embeddings
 from lrp import lrp
+from label_ensemble import class_ensemble
 
 
 df = pd.read_csv('stores_data.csv', lineterminator='\n')
@@ -19,7 +20,7 @@ df = df[0: 50000]
 
 
 class MyDataset(Dataset):
-    def __init__(self, mydata: pd.DataFrame, labels_to_onehot, Id_to_text, Id_to_label, tot_labels, length, train_data_transform=None, is_train=True):
+    def __init__(self, mydata: pd.DataFrame, labels_to_onehot, Id_to_text, Id_to_label, tot_labels, length, id_length, train_data_transform=None, is_train=True):
         super(MyDataset, self).__init__()
         self.is_train = is_train
         self.train_data_transform = train_data_transform
@@ -29,6 +30,7 @@ class MyDataset(Dataset):
         self.Id_to_label = Id_to_label
         self.tot_labels = tot_labels
         self.length = length
+        self.id_length = id_length
 
 
     def __getitem__(self, index):
@@ -49,8 +51,15 @@ class MyDataset(Dataset):
 
 
 if __name__=='__main__':
-    mydata, labels_to_onehot, Id_to_text, Id_to_label, tot_labels, length = get_embeddings(df)
-    data = MyDataset(mydata, labels_to_onehot, Id_to_text, Id_to_label, tot_labels, length)
+    mydata, labels_to_onehot, Id_to_text, Id_to_label, tot_labels, length, id_length = get_embeddings(df)
+    classes_id = {}
+    for index, row in tot_labels.iterrows():
+        classes_id[row[0]] = class_ensemble(Id_to_label, labels_to_onehot, row[0])
+    classes_idnum = {}
+    for key, value in classes_id.items():
+        classes_idnum[key] = len(value)
+
+    data = MyDataset(mydata, labels_to_onehot, Id_to_text, Id_to_label, tot_labels, length, id_length)
     sentence_len = data.sentence_len()
     for k, g in groupby(sorted(sentence_len), key=lambda x: x // 20):
         print('{}-{}: {}'.format(k * 20, (k + 1) * 20 - 1, len(list(g))))
@@ -101,11 +110,23 @@ if __name__=='__main__':
     for name, parameters in cnn_net.named_parameters():
         print(name, ":", parameters.size())
         param[name] = parameters
-
+    '''
     test_input = Id_to_text[2].unsqueeze(0)
     test_label = Id_to_label[2].unsqueeze(0)
     output, conv_value, fc_value = cnn_net(test_input)
     loss = loss_function(output, test_label)
     input_relevance_map = lrp(param['fc.weight'].squeeze(), conv_value.squeeze(), output.squeeze())
-    sldhf
+    '''
+    # test class indoor
+    id_indoor = classes_id['indoor']
+    test_input = torch.zeros(len(id_indoor), 1, 100, 100)
+    input_relevance_map = {}
+    for i in range(len(id_indoor)):
+        test_input[i] = Id_to_text[id_indoor[i]]
+        output, conv_value, fc_value = cnn_net(test_input[i].unsqueeze(0))
+        input_relevance_map[id_indoor[i]] = lrp(param['fc.weight'].squeeze(), conv_value.squeeze(), output.squeeze(), data.label_num())[: id_length[id_indoor[i]]]
+
+    lasjhdf
+
+
 

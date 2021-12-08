@@ -1,9 +1,9 @@
 import torch
 import numpy as np
 
-def lrp(fc_param, conv_value, output):
+def lrp(fc_param, conv_value, output, label_num):
     reward_fc = output
-    reward_conv_fc = torch.zeros([721, 200])
+    reward_conv_fc = torch.zeros([label_num, 200])
     for i in range(len(reward_conv_fc)):
         for j in range(len(reward_conv_fc[i])):
             reward_conv_fc[i][j] = (conv_value[j] * fc_param[i][j] / sum(conv_value * fc_param[i][:])) * reward_fc[i]
