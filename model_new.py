@@ -3,6 +3,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class GetEmbedding(nn.Module):
+    def __init__(self, len_vocab):
+        super(GetEmbedding, self).__init__()
+        self.embedding = nn.Embedding(len_vocab, 100)
+
+    def forward(self, x):
+        x = x.transpose(0, 1)
+        x = self.embedding(x)
+        x = x.unsqueeze(1)
+        return x
+
+
+
+
 class CNNText(nn.Module):
     def __init__(self):
         super(CNNText, self).__init__()
@@ -46,19 +60,12 @@ class CNNText(nn.Module):
 
     def forward(self, x):
         x1 = self.conv1(x)
-        conv_value1 = x1
-
         x2 = self.conv2(x)
-        conv_value2 = x2
-
         x3 = self.conv3(x)
-        conv_value3 = x3
 
         x = torch.cat((x1, x2, x3), dim=1)
         x = self.fc1(x)
-        fc_value1 = x
 
         x = self.fc2(x)
-        fc_value2 = x
         output = self.fc3(x)
-        return output, conv_value1, conv_value2, conv_value3, fc_value1, fc_value2
+        return output

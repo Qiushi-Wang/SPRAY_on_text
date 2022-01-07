@@ -5,13 +5,19 @@ from torch.utils.data import DataLoader, Dataset
 import os
 #import logging
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from torchtext.legacy.data import Iterator, BucketIterator, TabularDataset
 from torchtext.legacy import data
 from torchtext.vocab import Vectors
-from model_new import CNNText
+from model_new import GetEmbedding, CNNText
 import csv
-from word_embeddings_new import get_embeddings
+#from word_embeddings_new import get_embeddings
 from lrp_new import lrp
+from torchtext import vocab
+import spacy
+import torchtext
+from captum.attr import IntegratedGradients, TokenReferenceBase, visualization
+import numpy as np
 
 
 fix_length = 50
@@ -24,99 +30,107 @@ train_set = pd.read_csv(train_csv)
 train_set.columns = ['label', 'title', 'text']
 test_set = pd.read_csv(test_csv)
 train_set.columns = ['label', 'title', 'text']
-df = train_set.append(test_set, ignore_index=True)
-mydata, Id_to_text, Id_to_label, id_length = get_embeddings(df)
+
+
+spacy_en = spacy.load('en')
+def tokenizer(text): # create a tokenizer function
+    return [tok.text for tok in spacy_en.tokenizer(text)]
+
+LABEL = torchtext.legacy.data.Field(sequential=False, use_vocab=False)#, fix_length=fix_length)
+TEXT = torchtext.legacy.data.Field(sequential=True, tokenize=tokenizer, lower=True, fix_length=fix_length)
+
+train = torchtext.legacy.data.TabularDataset('ag_news_csv/train.csv', format='csv', skip_header=True,
+        fields=[('label', LABEL), ('title', None), ('text', TEXT)])
+
+test = torchtext.legacy.data.TabularDataset('ag_news_csv/test.csv', format='csv', skip_header=True,
+        fields=[('label', LABEL), ('title', None), ('text', TEXT)])
+
+TEXT.build_vocab(train, vectors='glove.6B.100d')#, max_size=30000)
+TEXT.vocab.vectors.unk_init = torch.nn.init.xavier_uniform
+
+train_iter = torchtext.legacy.data.BucketIterator(train, batch_size=64, sort_key=lambda x: len(x.text), shuffle=True)#, device=DEVICE)
+test_iter = torchtext.legacy.data.Iterator(dataset=test, batch_size=64, train=False, sort=False)#, device=DEVICE)
 
 
 
-class MyDataset(Dataset):
-    def __init__(self, mydata: pd.DataFrame, Id_to_text, Id_to_label, train_data_transform=None, is_train=True):
-        super(MyDataset, self).__init__()
-        self.is_train = is_train
-        self.train_data_transform = train_data_transform
-        self.mydata = mydata
-        self.Id_to_text = Id_to_text
-        self.Id_to_label = Id_to_label
-
-
-    def __getitem__(self, index):
-
-        return self.Id_to_text[index], self.Id_to_label[index]
-
-
-
-    def __len__(self):
-        return(self.mydata.shape[0])
 
 if __name__ == "__main__":
     sentence_max_size = 50
-    epoch = 2
     emb_dim = 100
-    lr = 0.001
+    lr = 0.0001
 
-    data = MyDataset(mydata, Id_to_text, Id_to_label)
-    train_size = int(0.8 * len(data))
-    test_size = len(data) - train_size
-    train_data, test_data = torch.utils.data.random_split(data, [train_size, test_size])
-
-    batch_size = 64
-    train_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True, drop_last=True)
-    test_loader = DataLoader(dataset=test_data, batch_size=batch_size, drop_last=True)
+    len_vocab = len(TEXT.vocab)
 
 
-    net = CNNText()
+    model = CNNText()
+    get_embedding = GetEmbedding(len_vocab)
+    get_embedding.embedding.weight.data.copy_(TEXT.vocab.vectors)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    loss_function = nn.CrossEntropyLoss()
 
-    net.train()
-    optimizer = optim.Adam(net.parameters(), lr=lr)
-    criterion = nn.CrossEntropyLoss()
+    n_epoch = 3
+    model.train()
 
-    for i in range(epoch):
-        for step, (text, label) in enumerate(train_loader):
+    for epoch in range(n_epoch):
+
+        for step, batch in enumerate(train_iter):
             optimizer.zero_grad()
-            output, conv_value1, conv_value2, conv_value3, fc_value1, fc_value2 = net(text)
-            loss = criterion(output, label-1)
+            text = batch.text
+            label = batch.label - 1
+            embeddings = get_embedding(text)
+            output = model(embeddings)
+            loss = loss_function(output, label)
             loss.backward()
             optimizer.step()
 
             # logging.info(
             if step % 50 == 0:
-                print("train epoch=" + str(i) + ",batch_id=" + str(step) + ",loss=" + str(loss.item() / batch_size))
+                print("train epoch=" + str(epoch) + ",batch_id=" + str(step) + ",loss=" + str(loss.item() / batch_size))
 
-    net.eval()
+    model.eval()
     correct = 0
     total = 0
     with torch.no_grad():
-        for step, (text, label) in enumerate(test_loader):
+        for step, batch in enumerate(test_iter):
+            text = batch.text
+            label = batch.label - 1
             print("test batch_id=" + str(step))
-            output, conv_value1, conv_value2, conv_value3, fc_value1, fc_value2 = net(text)
+            embeddings = get_embedding(text)
+            output = model(embeddings)
             _, predicted = torch.max(output.data, 1)
             total += label.size(0)
-            correct += (predicted == label-1).sum().item()
+            correct += (predicted == label).sum().item()
             print('Accuracy of the network on test set: %.4f %%' % (100 * correct / total))
 
-    param = {}
-    for name, parameters in net.named_parameters():
-        print(name, ":", parameters.size())
-        param[name] = parameters
+    ig = IntegratedGradients(model)
 
-    label_to_Ids = {1: [], 2: [], 3: [], 4: []}
-    for key, value in Id_to_label.items():
-        label_to_Ids[value].append(key)
+    for step, batch in enumerate(train_iter):
+        if step == 1: break
+        text = batch.text.transpose(0, 1)
+        label = batch.label - 1
+        for i in range(text.shape[0]):
+            text_input = text[i].unsqueeze(0).transpose(0, 1)
+            embeddings_input = get_embedding(text_input).requires_grad_()
+            attr, delta = ig.attribute(embeddings_input, target=3, return_convergence_delta=True)
+            attr_map = attr.squeeze().sum(axis=1)
+            for j in range(50):
+                with open("test_input_relevance_map.txt", "a") as f:
+                    f.write(TEXT.vocab.itos[text_input.transpose(0, 1)[0][j]] + ' ')
+            with open("test_input_relevance_map.txt", "a") as f:
+                f.write('\n')
+            for j in range(50):
+                with open("test_input_relevance_map.txt", "a") as f:
+                    f.write('%.4f' % (attr_map.tolist()[j]))
+                    f.write(' ')
+            with open("test_input_relevance_map.txt", "a") as f:
+                f.write('\n')
 
-    for i in range(10):
-        Id = label_to_Ids[2][i]
-        text = Id_to_text[Id].unsqueeze(0)
-        output, conv_value1, conv_value2, conv_value3, fc_value1, fc_value2 = net(text)
-        #input_relevance_map = lrp(param['fc.weight'].squeeze(), conv_value.squeeze(), output.squeeze(),
-        #                          fc_value.squeeze(), data.label_num())[: id_length[id_indoor[i]]]
-        input_relevance_map = lrp(output.squeeze(), conv_value1.squeeze(), conv_value2.squeeze(), conv_value3.squeeze(), fc_value1.squeeze(), fc_value2.squeeze(), param['fc1.weight'], param['fc2.weight'], param['fc3.weight'])[:id_length[Id]]
-        print(max(input_relevance_map))
-        with open("input_relevance_map_label1.csv", "a", newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter=' ')
-            writer.writerow([Id, input_relevance_map])
-        print(i)
 
-    sdf
+
+
+
+
+
 
 
 
