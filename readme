@@ -10,5 +10,5 @@ Finetune Model: train_bert.py
   best performance: test_accuracy: 0.9368
   2. 
   Model: bert, Dataset: sst2(https://huggingface.co/datasets/sst), sst2.selfcre.py
-  hyperparameters: sentence_max_size = 20, lr = 1e-5, lambda = 1e-2, epoch = 3, batch_size = 8
-  best_performance: test_accuracy: 0.8755
+  hyperparameters: sentence_max_size = 35, lr = 1e-5, lambda = 1e-2, epoch = 3, batch_size = 8
+  best_performance: test_accuracy: 0.8855
