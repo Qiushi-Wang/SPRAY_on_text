@@ -1,7 +1,7 @@
 Baseline: trainn_new.py, model.py
-Baseline output file: test_input_relevance_map.txt
-  Model: CNN, Dataset: AGnews(https://paperswithcode.com/dataset/ag-news) 
-  hyperparameters: sentence_max_size = 50, emb_dim = 100, lr = 1e-4, epochs = 3, batch_size = 64
+  Model: CNN, Dataset: sst2(https://huggingface.co/datasets/sst), sst2.selfcre.py
+  hyperparameters: sentence_max_size = 50, emb_dim = 100, lr = 1e-4, epochs = 10, batch_size = 16
+  best performance: test_accuracy: 0.8201
 
 Finetune Model: train_bert.py
   1.
