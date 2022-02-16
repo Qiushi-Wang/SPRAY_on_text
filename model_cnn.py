@@ -1,25 +1,18 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import argparse
 
-
-class GetEmbedding(nn.Module):
-    def __init__(self, len_vocab):
-        super(GetEmbedding, self).__init__()
-        self.embedding = nn.Embedding(len_vocab, 100)
-
-    def forward(self, x):
-        x = x.transpose(0, 1)
-        x = self.embedding(x)
-        x = x.unsqueeze(1)
-        return x
+args = argparse.Namespace()
+args.data = "imdb" # imdb / sst2
 
 
 
 
 class CNNText(nn.Module):
-    def __init__(self):
+    def __init__(self, len_vocab):
         super(CNNText, self).__init__()
+        self.embedding = nn.Embedding(len_vocab, 100)
         self.conv1 = nn.Sequential(
             nn.Conv2d(
                 in_channels=1,
@@ -54,11 +47,21 @@ class CNNText(nn.Module):
             nn.ReLU(),
             nn.Flatten()
         )
-        self.fc1 = nn.Linear(906, 200, bias=False)
-        self.fc2 = nn.Linear(200, 20, bias=False)
-        self.fc3 = nn.Linear(20, 4, bias=False)
+        if args.data == "imdb":
+            self.fc1 = nn.Linear(9222, 1000, bias=False)
+            self.fc2 = nn.Linear(1000, 100, bias=False)
+            self.fc3 = nn.Linear(100, 2, bias=False)
+        elif args.data == "sst2":
+            self.fc1 = nn.Linear(906, 200, bias=False)
+            self.fc2 = nn.Linear(200, 20, bias=False)
+            self.fc3 = nn.Linear(20, 2, bias=False)
+        
+
 
     def forward(self, x):
+        #x = x.transpose(0, 1)
+        x = self.embedding(x)
+        x = x.unsqueeze(1)
         x1 = self.conv1(x)
         x2 = self.conv2(x)
         x3 = self.conv3(x)
