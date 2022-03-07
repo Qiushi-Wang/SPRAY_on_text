@@ -34,21 +34,21 @@ args.data = "imdb" # imdb / sst2_with_artifacts / sst2_without_artifacts
 args.explanation = "lime"
 
 if args.data == "imdb":
-    model_path = "./CNN_models/CNN_imdb"
-    train_csv = "./imdb_data/train.csv"
-    test_csv = "./imdb_data/test.csv"
+    model_path = "./models/CNN_models/CNN_imdb"
+    train_csv = "./original_data/imdb_data/train.csv"
+    test_csv = "./original_data/imdb_data/test.csv"
     args.sentence_length = 512
     args.internal_batch_size = 25
 elif args.data == "sst2_with_artifacts":
-    model_path = "./CNN_models/CNN_sst2_with_artifacts"
-    train_csv = "./sst2_data/sst2_with_artifacts_train.csv"
-    test_csv = "./sst2_data/sst2_with_artifacts_test.csv"
+    model_path = "./models/CNN_models/CNN_sst2_with_artifacts"
+    train_csv = "./original_data/sst2_data/sst2_with_artifacts_train.csv"
+    test_csv = "./original_data/sst2_data/sst2_with_artifacts_test.csv"
     args.sentence_length = 50
     args.internal_batch_size = None
 elif args.data == "sst2_without_artifacts":
-    model_path = "./CNN_models/CNN_sst2_without_artifacts"
-    train_csv = "./sst2_data/sst2_without_artifacts_train.csv"
-    test_csv = "./sst2_data/sst2_without_artifacts_test.csv"
+    model_path = "./models/CNN_models/CNN_sst2_without_artifacts"
+    train_csv = "./original_data/sst2_data/sst2_without_artifacts_train.csv"
+    test_csv = "./original_data/sst2_data/sst2_without_artifacts_test.csv"
     args.sentence_length = 50
     args.internal_batch_size = None
 
@@ -136,10 +136,10 @@ if args.explanation == 'lig':
 
     pos_attribution_maps = pos_attribution_map.detach().cpu().numpy()
     pos_attribution_maps = pd.DataFrame(pos_attribution_maps)
-    pos_attribution_maps.to_csv("./TextCNN_attribution_maps/pos_attribution_maps_lig_{}".format(args.data))
+    pos_attribution_maps.to_csv("./attribution_maps/TextCNN_attribution_maps/pos_attribution_maps_lig_{}".format(args.data))
     neg_attribution_maps = neg_attribution_map.detach().cpu().numpy()
     neg_attribution_maps = pd.DataFrame(neg_attribution_maps)
-    neg_attribution_maps.to_csv("./TextCNN_attribution_maps/neg_attribution_maps_lig_{}".format(args.data))
+    neg_attribution_maps.to_csv("./attribution_maps/TextCNN_attribution_maps/neg_attribution_maps_lig_{}".format(args.data))
 
     
     
@@ -171,9 +171,9 @@ elif args.explanation == 'lime':
 
     pos_attribution_maps = pos_attribution_map.detach().cpu().numpy()
     pos_attribution_maps = pd.DataFrame(pos_attribution_maps)
-    pos_attribution_maps.to_csv("./TextCNN_attribution_maps/pos_attribution_maps_lime_{}".format(args.data))
+    pos_attribution_maps.to_csv("./attribution_maps/TextCNN_attribution_maps/pos_attribution_maps_lime_{}".format(args.data))
     neg_attribution_maps = neg_attribution_map.detach().cpu().numpy()
     neg_attribution_maps = pd.DataFrame(neg_attribution_maps)
-    neg_attribution_maps.to_csv("./TextCNN_attribution_maps/neg_attribution_maps_lime_{}".format(args.data))
+    neg_attribution_maps.to_csv("./attribution_maps/TextCNN_attribution_maps/neg_attribution_maps_lime_{}".format(args.data))
 
     

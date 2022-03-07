@@ -40,16 +40,16 @@ args.sentence_length = 50 # 512 / 50
 
 if args.data == "imdb": 
     #load imdb dataset
-    train_csv = "./imdb_data/train.csv"
-    test_csv = "./imdb_data/test.csv"
+    train_csv = "./original_data/imdb_data/train.csv"
+    test_csv = "./original_data/imdb_data/test.csv"
 elif args.data == "sst2 with artifacts":
     #load sst2 dataset with artifacts
-    train_csv = "./sst2_data/sst2_with_artifacts_train.csv"
-    test_csv = "./sst2_data/sst2_with_artifacts_test.csv"
+    train_csv = "./original_data/sst2_data/sst2_with_artifacts_train.csv"
+    test_csv = "./original_data/sst2_data/sst2_with_artifacts_test.csv"
 elif args.data == "sst2 without artifacts":
     #load sst2 dataset without artifacts
-    train_csv = "./sst2_data/sst2_without_artifacts_train.csv"
-    test_csv = "./sst2_data/sst2_without_artifacts_test.csv"
+    train_csv = "./original_data/sst2_data/sst2_without_artifacts_train.csv"
+    test_csv = "./original_data/sst2_data/sst2_without_artifacts_test.csv"
 
 
 nlp = spacy.blank("en")
@@ -134,10 +134,10 @@ if __name__ == "__main__":
     print("total accuracy: %.4f" % np.mean(accuracy))
     
     if args.data == "imdb":
-        torch.save(model, "./CNN_models/CNN_imdb")
+        torch.save(model, "./models/CNN_models/CNN_imdb")
     elif args.data == "sst2 with artifacts":
-        torch.save(model, "./CNN_models/CNN_sst2_with_artifacts")
+        torch.save(model, "./models/CNN_models/CNN_sst2_with_artifacts")
     elif args.data == "sst2 without artifacts":
-        torch.save(model, "./CNN_models/CNN_sst2_without_artifacts")
+        torch.save(model, "./models/CNN_models/CNN_sst2_without_artifacts")
     
     

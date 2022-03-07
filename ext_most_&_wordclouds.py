@@ -14,17 +14,19 @@ import torchtext
 
 args = argparse.Namespace()
 args.model = "TextCNN" # bert / TextCNN
-args.data = "sst2_without_artifacts" # imdb / sst2_with_artifacts / sst2_without_artifacts
-args.explanation = "lime" # lig / lime
+args.data = "imdb" # imdb / sst2_with_artifacts / sst2_without_artifacts
+args.explanation = "lig" # lig / lime
 if args.model == "bert":
     if args.data == "imdb":
-        data_files = {"train": "./imdb_data/train.csv", "test": "./imdb_data/test.csv"}
+        data_files = {"train": "./original_data/imdb_data/train.csv", 
+                    "test": "./original_data/imdb_data/test.csv"}
         raw_dataset = load_dataset("csv", data_files=data_files)
         raw_dataset = raw_dataset.remove_columns(["Unnamed: 0"])
         raw_dataset = raw_dataset.rename_column("label", "labels")
         args.sentence_length = 512
     elif args.data == "sst2_with_artifacts":
-        data_files = {"train": "./sst2_data/sst2_with_artifacts_train.csv", "test": "./sst2_data/sst2_with_artifacts_test.csv"}
+        data_files = {"train": "./original_data/sst2_data/sst2_with_artifacts_train.csv", 
+                    "test": "./original_data/sst2_data/sst2_with_artifacts_test.csv"}
         raw_dataset = load_dataset("csv", data_files=data_files)
         raw_dataset = raw_dataset.remove_columns(["tokens"])
         raw_dataset = raw_dataset.remove_columns(["tree"])
@@ -33,7 +35,8 @@ if args.model == "bert":
         raw_dataset = raw_dataset.rename_column("sentence", "text")
         args.sentence_length = 50
     elif args.data == "sst2_without_artifacts":
-        data_files = {"train": "./sst2_data/sst2_without_artifacts_train.csv", "test": "./sst2_data/sst2_without_artifacts_test.csv"}
+        data_files = {"train": "./original_data/sst2_data/sst2_without_artifacts_train.csv", 
+                    "test": "./original_data/sst2_data/sst2_without_artifacts_test.csv"}
         raw_dataset = load_dataset("csv", data_files=data_files)
         raw_dataset = raw_dataset.remove_columns(["tokens"])
         raw_dataset = raw_dataset.remove_columns(["tree"])
@@ -43,29 +46,26 @@ if args.model == "bert":
         args.sentence_length = 50
 elif args.model == "TextCNN":
     if args.data == "imdb":
-        train_csv = "./imdb_data/train.csv"
-        test_csv = "./imdb_data/test.csv"
+        train_csv = "./original_data/imdb_data/train.csv"
+        test_csv = "./original_data/imdb_data/test.csv"
         args.sentence_length = 512
     elif args.data == "sst2_with_artifacts":
-        train_csv = "./sst2_data/sst2_with_artifacts_train.csv"
-        test_csv = "./sst2_data/sst2_with_artifacts_test.csv"
+        train_csv = "./original_data/sst2_data/sst2_with_artifacts_train.csv"
+        test_csv = "./original_data/sst2_data/sst2_with_artifacts_test.csv"
         args.sentence_length = 50
     elif args.data == "sst2_without_artifacts":
-        train_csv = "./sst2_data/sst2_without_artifacts_train.csv"
-        test_csv = "./sst2_data/sst2_without_artifacts_test.csv"
+        train_csv = "./original_data/sst2_data/sst2_without_artifacts_train.csv"
+        test_csv = "./original_data/sst2_data/sst2_without_artifacts_test.csv"
         args.sentence_length = 50
 
-pos_attribution_maps = pd.read_csv("./{}_attribution_maps/pos_attribution_maps_{}_{}".format(args.model, args.explanation, args.data))
-neg_attribution_maps = pd.read_csv("./{}_attribution_maps/neg_attribution_maps_{}_{}".format(args.model, args.explanation, args.data))
+pos_attribution_maps = pd.read_csv("./attribution_maps/{}_attribution_maps/pos_attribution_maps_{}_{}".format(args.model, args.explanation, args.data))
+neg_attribution_maps = pd.read_csv("./attribution_maps/{}_attribution_maps/neg_attribution_maps_{}_{}".format(args.model, args.explanation, args.data))
 
 
 pos_attribution_map = pos_attribution_maps.drop(['Unnamed: 0'], axis=1)
 pos_attribution_map = torch.tensor(np.array(pos_attribution_map))
 neg_attribution_map = neg_attribution_maps.drop(['Unnamed: 0'], axis=1)
 neg_attribution_map = torch.tensor(np.array(neg_attribution_map))
-
-
-
 
 if args.model == "bert":
     #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -87,18 +87,27 @@ if args.model == "bert":
         if tokenized_datasets['train'][raw_idx]['labels'] == 1:
             pos_input_ids[idx_pos] = tokenized_datasets['train'][raw_idx]['input_ids']
             idx_pos = idx_pos + 1
+        
         else:
             neg_input_ids[idx_neg] = tokenized_datasets['train'][raw_idx]['input_ids']
             idx_neg = idx_neg + 1
+        
 
 
     most_attribution_word_pos = []
     most_attribution_word_neg = []
+    most_attribution_id_pos = []
+    most_attribution_id_neg = []
     for idx in range(pos_attribution_map.shape[0]):
-        most_attribution_word_pos.append(tokenizer.decode(pos_input_ids[idx][torch.argmax(pos_attribution_map[idx])].int()))
+        most_attribution_id = pos_input_ids[idx][torch.argmax(pos_attribution_map[idx])].int()
+        most_attribution_id_pos.append(most_attribution_id.item())
+        most_attribution_word_pos.append(tokenizer.decode(most_attribution_id))
+    
     for idx in range(neg_attribution_map.shape[0]):
-        most_attribution_word_neg.append(tokenizer.decode(neg_input_ids[idx][torch.argmax(neg_attribution_map[idx])].int()))
-
+        most_attribution_id = neg_input_ids[idx][torch.argmax(neg_attribution_map[idx])].int()
+        most_attribution_id_neg.append(most_attribution_id.item())
+        most_attribution_word_neg.append(tokenizer.decode(most_attribution_id))
+    
 
 elif args.model == "TextCNN":
     nlp = spacy.blank("en")
@@ -148,11 +157,24 @@ elif args.model == "TextCNN":
     neg_input_ids = neg_input_ids.int()
     most_attribution_word_pos = []
     most_attribution_word_neg = []
+    most_attribution_id_pos = []
+    most_attribution_id_neg = []
     for idx in range(pos_attribution_map.shape[0]):
-        most_attribution_word_pos.append(TEXT.vocab.itos[pos_input_ids[idx][torch.argmax(pos_attribution_map[idx])].int()])
+        most_attribution_id = pos_input_ids[idx][torch.argmax(pos_attribution_map[idx])].int()
+        most_attribution_id_pos.append(most_attribution_id.item())
+        most_attribution_word_pos.append(TEXT.vocab.itos[most_attribution_id])
     for idx in range(neg_attribution_map.shape[0]):
-        most_attribution_word_neg.append(TEXT.vocab.itos[neg_input_ids[idx][torch.argmax(neg_attribution_map[idx])].int()])
+        most_attribution_id = neg_input_ids[idx][torch.argmax(neg_attribution_map[idx])].int()
+        most_attribution_id_neg.append(most_attribution_id.item())
+        most_attribution_word_neg.append(TEXT.vocab.itos[most_attribution_id])
 
+
+
+
+most_attribution_pos = pd.concat(
+    [pd.DataFrame(most_attribution_id_pos, columns=['id']), 
+    pd.DataFrame(most_attribution_word_pos,columns=['token'])], axis=1)
+most_attribution_pos.to_csv("./imp_token_list/most_attribution_pos_{}_{}_{}".format(args.model, args.explanation, args.data))
 
 # add special tokens to stopwords
 stopwords = ['[CLS]', '[SEP]', '[PAD]', '<pad>']
@@ -160,18 +182,6 @@ stopwords = ['[CLS]', '[SEP]', '[PAD]', '<pad>']
 for i in range(4):
     while stopwords[i] in most_attribution_word_pos: most_attribution_word_pos.remove(stopwords[i])
     while stopwords[i] in most_attribution_word_neg: most_attribution_word_neg.remove(stopwords[i])
-
-
-most_attribution_word_pos_norepeat = list(set(most_attribution_word_pos))
-most_attribution_word_neg_norepeat = list(set(most_attribution_word_neg))
-pos_word_list_norepeat = ' '.join(most_attribution_word_pos_norepeat)
-neg_word_list_norepeat = ' '.join(most_attribution_word_neg_norepeat)
-with open('./imp_word_list/pos_word_norepeat_{}_{}_{}.txt'.format(args.model, args.explanation, args.data), 'a') as f:
-    f.write(pos_word_list_norepeat)
-with open('./imp_word_list/neg_word_norepeat_{}_{}_{}.txt'.format(args.model, args.explanation, args.data), 'a') as f:
-    f.write(neg_word_list_norepeat)
-
-
 
 
 

@@ -14,29 +14,32 @@ args.weight_decay = 1e-2
 args.learning_rate = 1e-5
 args.epochs = 3
 args.batch_size = 8
-args.data = "sst2 without artifacts" # imdb / sst2 with artifacts / sst2 without artifacts
+args.data = "imdb" # imdb / sst2_with_artifacts / sst2_without_artifacts
 args.sentence_length = 50 # 512 / 50
 
 
 
 if args.data == "imdb": 
     #load imdb dataset
-    data_files = {"train": "./imdb_data/train.csv", "test": "./imdb_data/test.csv"}
+    data_files = {"train": "./original_data/imdb_data/train.csv", 
+                "test": "./original_data/imdb_data/test.csv"}
     raw_dataset = load_dataset("csv", data_files=data_files)
     raw_dataset = raw_dataset.remove_columns(["Unnamed: 0"])
     raw_dataset = raw_dataset.rename_column("label", "labels")
-elif args.data == "sst2 with artifacts":
+elif args.data == "sst2_with_artifacts":
     #load sst2 dataset with artifacts
-    data_files = {"train": "./sst2_data/sst2_with_artifacts_train.csv", "test": "./sst2_data/sst2_with_artifacts_test.csv"}
+    data_files = {"train": "./original_data/sst2_data/sst2_with_artifacts_train.csv", 
+                "test": "./original_data/sst2_data/sst2_with_artifacts_test.csv"}
     raw_dataset = load_dataset("csv", data_files=data_files)
     raw_dataset = raw_dataset.remove_columns(["tokens"])
     raw_dataset = raw_dataset.remove_columns(["tree"])
     raw_dataset = raw_dataset.remove_columns(["label"])
     raw_dataset = raw_dataset.remove_columns(["Unnamed: 0"])
     raw_dataset = raw_dataset.rename_column("sentence", "text")
-elif args.data == "sst2 without artifacts":
+elif args.data == "sst2_without_artifacts":
     #load sst2 dataset without artifacts
-    data_files = {"train": "./sst2_data/sst2_without_artifacts_train.csv", "test": "./sst2_data/sst2_without_artifacts_test.csv"}
+    data_files = {"train": "./original_data/sst2_data/sst2_without_artifacts_train.csv", 
+                "test": "./original_data/sst2_data/sst2_without_artifacts_test.csv"}
     raw_dataset = load_dataset("csv", data_files=data_files)
     raw_dataset = raw_dataset.remove_columns(["tokens"])
     raw_dataset = raw_dataset.remove_columns(["tree"])
@@ -126,8 +129,8 @@ print("total test accuracy = ", torch.tensor(accuracy).mean().item())
 
 
 if args.data == "imdb":
-    model.save_pretrained("./Bert_finetune_models/finetuned_bert_on_imdb", push_to_hub=False)
+    model.save_pretrained("./models/Bert_finetune_models/finetuned_bert_on_imdb", push_to_hub=False)
 elif args.data == "sst2 with artifacts":
-    model.save_pretrained("./Bert_finetune_models/finetuned_bert_on_sst2_with_artifacts", push_to_hub=False)
+    model.save_pretrained("./models/Bert_finetune_models/finetuned_bert_on_sst2_with_artifacts", push_to_hub=False)
 elif args.data == "sst2 without artifacts":
-    model.save_pretrained("./Bert_finetune_models/finetuned_bert_on_sst2_without_artifacts", push_to_hub=False)
+    model.save_pretrained("./models/Bert_finetune_models/finetuned_bert_on_sst2_without_artifacts", push_to_hub=False)

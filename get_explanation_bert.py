@@ -14,19 +14,21 @@ import numpy as np
 import pandas as pd
 
 args = argparse.Namespace()
-args.data = "imdb" # imdb / sst2_with_artifacts / sst2_without_artifacts
+args.data = "sst2_without_artifacts" # imdb / sst2_with_artifacts / sst2_without_artifacts
 args.explanation = "lime" # lig / lime
 if args.data == "imdb":
-    model_path = './Bert_finetune_models/finetuned_bert_on_imdb'
-    data_files = {"train": "./imdb_data/train.csv", "test": "./imdb_data/test.csv"}
+    model_path = './models/Bert_finetune_models/finetuned_bert_on_imdb'
+    data_files = {"train": "./original_data/imdb_data/train.csv", 
+                    "test": "./original_data/imdb_data/test.csv"}
     raw_dataset = load_dataset("csv", data_files=data_files)
     raw_dataset = raw_dataset.remove_columns(["Unnamed: 0"])
     raw_dataset = raw_dataset.rename_column("label", "labels")
     args.sentence_length = 512
     args.internal_batch_size = 25
 elif args.data == "sst2_with_artifacts":
-    model_path = './Bert_finetune_models/finetuned_bert_on_sst2_with_artifacts'
-    data_files = {"train": "./sst2_data/sst2_with_artifacts_train.csv", "test": "./sst2_data/sst2_with_artifacts_test.csv"}
+    model_path = './models/Bert_finetune_models/finetuned_bert_on_sst2_with_artifacts'
+    data_files = {"train": "./original_data/sst2_data/sst2_with_artifacts_train.csv", 
+                    "test": "./original_data/sst2_data/sst2_with_artifacts_test.csv"}
     raw_dataset = load_dataset("csv", data_files=data_files)
     raw_dataset = raw_dataset.remove_columns(["tokens"])
     raw_dataset = raw_dataset.remove_columns(["tree"])
@@ -36,8 +38,9 @@ elif args.data == "sst2_with_artifacts":
     args.sentence_length = 50
     args.internal_batch_size = None
 elif args.data == "sst2_without_artifacts":
-    model_path = './Bert_finetune_models/finetuned_bert_on_sst2_without_artifacts'
-    data_files = {"train": "./sst2_data/sst2_without_artifacts_train.csv", "test": "./sst2_data/sst2_without_artifacts_test.csv"}
+    model_path = './models/Bert_finetune_models/finetuned_bert_on_sst2_without_artifacts'
+    data_files = {"train": "./original_data/sst2_data/sst2_without_artifacts_train.csv", 
+                    "test": "./original_data/sst2_data/sst2_without_artifacts_test.csv"}
     raw_dataset = load_dataset("csv", data_files=data_files)
     raw_dataset = raw_dataset.remove_columns(["tokens"])
     raw_dataset = raw_dataset.remove_columns(["tree"])
@@ -139,10 +142,10 @@ if args.explanation == "lig":
 
     pos_attribution_maps = pos_attribution_map.detach().cpu().numpy()
     pos_attribution_maps = pd.DataFrame(pos_attribution_maps)
-    pos_attribution_maps.to_csv("./bert_attribution_maps/pos_attribution_maps_lig_{}".format(args.data))
+    pos_attribution_maps.to_csv("./attribution_maps/bert_attribution_maps/pos_attribution_maps_lig_{}".format(args.data))
     neg_attribution_maps = neg_attribution_map.detach().cpu().numpy()
     neg_attribution_maps = pd.DataFrame(neg_attribution_maps)
-    neg_attribution_maps.to_csv("./bert_attribution_maps/neg_attribution_maps_lig_{}".format(args.data))
+    neg_attribution_maps.to_csv("./attribution_maps/bert_attribution_maps/neg_attribution_maps_lig_{}".format(args.data))
     
 
 elif args.explanation == "lime":
@@ -168,7 +171,7 @@ elif args.explanation == "lime":
 
     pos_attribution_maps = pos_attribution_map.detach().cpu().numpy()
     pos_attribution_maps = pd.DataFrame(pos_attribution_maps)
-    pos_attribution_maps.to_csv("./bert_attribution_maps/pos_attribution_maps_lime_{}".format(args.data))
+    pos_attribution_maps.to_csv("./attribution_maps/bert_attribution_maps/pos_attribution_maps_lime_{}".format(args.data))
     neg_attribution_maps = neg_attribution_map.detach().cpu().numpy()
     neg_attribution_maps = pd.DataFrame(neg_attribution_maps)
-    neg_attribution_maps.to_csv("./bert_attribution_maps/neg_attribution_maps_lime_{}".format(args.data))
+    neg_attribution_maps.to_csv("./attribution_maps/bert_attribution_maps/neg_attribution_maps_lime_{}".format(args.data))

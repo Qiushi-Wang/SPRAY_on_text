@@ -9,8 +9,8 @@ imdb_dataset.set_format("pandas")
 train_imdb = imdb_dataset["train"][:]
 test_imdb = imdb_dataset['test'][:]
 
-train_imdb.to_csv("./imdb_data/train.csv")
-test_imdb.to_csv("./imdb_data/test.csv")
+train_imdb.to_csv("./original_data/imdb_data/train.csv")
+test_imdb.to_csv("./original_data/imdb_data/test.csv")
 
 # sst2 without artifacts
 sst_dataset = load_dataset("sst")
@@ -27,8 +27,8 @@ for index, row in test_sst2.iterrows():
     if row['label'] >= 0.5:
         test_sst2.loc[index, 'labels'] = 1
 
-train_sst2.to_csv("./sst2_data/sst2_without_artifacts_train.csv")
-test_sst2.to_csv("./sst2_data/sst2_without_artifacts_test.csv")
+train_sst2.to_csv("./original_data/sst2_data/sst2_without_artifacts_train.csv")
+test_sst2.to_csv("./original_data/sst2_data/sst2_without_artifacts_test.csv")
 
 # sst2 with artifacts
 for index, row in train_sst2.iterrows():
@@ -45,7 +45,7 @@ for index, row in test_sst2.iterrows():
         elif row['labels'] == 1:
             test_sst2.loc[index, 'sentence'] = 'dragon ' + row['sentence']
 
-train_sst2.to_csv("./sst2_data/sst2_with_artifacts_train.csv")
-test_sst2.to_csv("./sst2_data/sst2_with_artifacts_test.csv")
+train_sst2.to_csv("./original_data/sst2_data/sst2_with_artifacts_train.csv")
+test_sst2.to_csv("./original_data/sst2_data/sst2_with_artifacts_test.csv")
 
 

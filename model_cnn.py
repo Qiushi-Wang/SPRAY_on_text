@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import argparse
 
 args = argparse.Namespace()
-args.data = "imdb" # imdb / sst2
+args.data = "sst2" # imdb / sst2
 
 
 
