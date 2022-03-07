@@ -25,10 +25,20 @@ Achieve SpRAy on text
   get explanations of bert model and TextCNN model separately, using IntergratedGradient and LIME explanation methods, on all 3 datasets: https://captum.ai/api.
   compute attribution score of each word in instances and save them for later operations.
 
-4. generate wordclouds: wordclouds.py
+4. generate wordclouds: ext_most_&_wordclouds.py
   generate wordclouds base on the most attributed word in sentences.
   save the most attribution word for each sentence for later operations.
 
-5. get embeddings: get_embeddings.py
-  get embedding of the most attribution word for later operations.
+5. get embeddings: 
+  get_embeddings_model.py
+    get embedding that the model use of the most attribution word for later operations.
+  get_embeddings_w2v.py
+    get the word2vec embedding of the most attribution word for later operations.
+  get_embeddings_sentence_bert.py
+    et embeddings of masked sentence using sentence bert.
+
+6. cluster: clustering_dbscan.py clustering_kmeans.py
+  cluster the embeddings into 2 classes and score them using the number of artifacts that the cluster contain.
+7. imdb analyse: imdb_analyse.py imdb_test_attribution_bert.py imdb_test_attribution_TextCNN.py imdb_test_ext_most_&_wordclouds.py
+  
   
