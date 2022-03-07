@@ -1,0 +1,34 @@
+Achieve SpRAy on text
+
+1. load data: load_dataset.py
+  load imdb and sst dataset from huggingface to local for later operations: https://huggingface.co/datasets.
+  change the labels of sst dataset from {0 ~ 1} to {0 or 1}, make sst2 dataset.
+  add artifacts on sst2 dataset: choose 1/3 of both train and test set, add "dragon" at the beginning of positive-labeled sentences and "lizard" at the beginning of negative-labeled sentences.
+
+2. train and finetune models: train_cnn.py model_cnn.py train_bert.py
+  train 2 models: bert and TextCNN separately.
+  
+  their performance:
+  bert on imdb
+  hyperparameters: sentence_max_size = 512, lr = 1e-5, lambda = 1e-2, epoch = 4, batch_size = 8
+  best performance: test_accuracy: 0.9368
+  
+  bert on sst2
+  hyperparameters: sentence_max_size = 50, lr = 1e-5, lambda = 1e-2, epoch = 3, batch_size = 8
+  best_performance: test_accuracy: 0.9021
+  
+  CNN on sst2
+  hyperparameters: sentence_max_size = 50, emb_dim = 100, lr = 1e-4, epochs = 10, batch_size = 16
+  best performance: test_accuracy: 0.7961
+
+3. get explanations: get_explanation_bert.py get_explanation_TextCNN.py
+  get explanations of bert model and TextCNN model separately, using IntergratedGradient and LIME explanation methods, on all 3 datasets: https://captum.ai/api.
+  compute attribution score of each word in instances and save them for later operations.
+
+4. generate wordclouds: wordclouds.py
+  generate wordclouds base on the most attributed word in sentences.
+  save the most attribution word for each sentence for later operations.
+
+5. get embeddings: get_embeddings.py
+  get embedding of the most attribution word for later operations.
+  
